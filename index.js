@@ -5,7 +5,7 @@
   let charCollection = [];
   let charAreas = [];
   let blankAreas = [];
-  let resArr = [];
+  let resArr = [undefined,undefined,undefined,undefined]
   let oChars = null;
   let startX = 0;
   let startY = 0;
@@ -18,7 +18,6 @@
     render();
     oChars = charCellGroup.querySelectorAll(".cell-item .wrapper");
     getAreas(oBlanks, blankAreas);
-    console.log("blankAreas", blankAreas);
     getAreas(oChars, charAreas);
     bindEvent();
   };
@@ -48,8 +47,7 @@
     this.style.width = cellW + "px";
     this.style.height = cellH + "px";
     this.style.position = "fixed";
-    this.style.left = cellX + "px";
-    this.style.top = cellY + "px";
+    setPosition(this, { x: cellX, y: cellY });
   }
   function handleTouchMove(e) {
     e.preventDefault();
@@ -57,8 +55,7 @@
     const moveY = e.touches[0].clientY;
     cellY = moveY - mouseY;
     cellX = moveX - mouseX;
-    this.style.left = cellX + "px";
-    this.style.top = cellY + "px";
+    setPosition(this, { x: cellX, y: cellY });
   }
   function handleTouchEnd(e) {
     const blankWidth = oBlanks[0].offsetWidth;
@@ -79,7 +76,19 @@
           cellY > startY &&
           cellY < startY + blankHeight / 2)
       ) {
-        setPosition(this,{startX,startY})
+        setPosition(this, { x: startX, y: startY });
+        setResArr(this, i);
+        console.log(resArr)
+        if (!resArr.includes(undefined)) {
+          setTimeout(() => {
+            if (!checkResult()) {
+              alert("错了");
+            } else {
+                alert("正确了");
+            }
+            resetPosition();
+          }, 500);
+        }
         return;
       }
     }
@@ -87,12 +96,26 @@
     // 回弹逻辑
     const _index = Number(this.dataset.index);
     const charArea = charAreas[_index];
-    this.style.left = charArea.startX + "px";
-    this.style.top = charArea.startY + "px";
+    setPosition(this, { x: charArea.startX, y: charArea.startY });
   }
-  function setPosition(el, { startX, startY }) {
-    el.style.left = startX + "px";
-    el.style.top = startY + "px ";
+  function setPosition(el, { x, y }) {
+    el.style.left = x + "px";
+    el.style.top = y + "px ";
+  }
+  function resetPosition() {
+    console.log(resArr)
+    resArr.forEach((item) => {
+      const el = item.el;
+      const index = Number(el.dataset.index);
+      const { startX, startY } = charAreas[index];
+      setPosition(el, { x: startX, y: startY });
+    });
+    resArr = [];
+    startX = 0;
+    startY = 0;
+    cellX = 0;
+    cellY = 0;
+    mouseY = 0;
   }
   function getAreas(domCollection, arrWrapper) {
     let startX = 0;
@@ -123,6 +146,19 @@
             </div>
             
             `;
+  }
+  function setResArr(el, index) {
+    resArr[index] = {
+      char: el.innerText,
+      el
+    };
+  }
+  function checkResult() {
+    let idiom = "";
+    resArr.forEach((item) => {
+      idiom += item.char;
+    });
+    return idioms.find((item) => item === idiom);
   }
   init();
 })();
